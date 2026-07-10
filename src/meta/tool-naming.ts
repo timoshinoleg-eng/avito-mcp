@@ -1,0 +1,54 @@
+/**
+ * Domain prefixes — must match the operation names from the swagger files.
+ * When operationId values collide across files, the prefix makes the name unique.
+ */
+export const DOMAIN_PREFIXES = {
+  auth: 'auth',
+  user: 'user',
+  items: 'items',
+  messenger: 'messenger',
+  autoload: 'autoload',
+  orders: 'orders',
+  delivery: 'delivery',
+  promotion: 'promotion',
+  cpa: 'cpa',
+  cpa_auction: 'cpa_auction',
+  cpa_target: 'cpa_target',
+  stock: 'stock',
+  hierarchy: 'hierarchy',
+  reviews: 'reviews',
+  tariffs: 'tariffs',
+  trxpromo: 'trxpromo',
+  calltracking: 'calltracking',
+  msg_discounts: 'msg_discounts',
+} as const;
+
+export const TOOL_DOMAIN_PREFIXES = [...Object.values(DOMAIN_PREFIXES), 'meta'].sort(
+  (a, b) => b.length - a.length,
+);
+
+export function domainOfToolName(name: string): string {
+  for (const domain of TOOL_DOMAIN_PREFIXES) {
+    if (name === domain || name.startsWith(`${domain}_`)) return domain;
+  }
+  return 'unknown';
+}
+
+/**
+ * camelCase / PascalCase / kebab-case → snake_case.
+ *   "getUserBalance"      → "get_user_balance"
+ *   "GetTokenOAuthRequest" → "get_token_o_auth_request" (fine for most cases)
+ *   "v1-list-items"       → "v1_list_items"
+ */
+export function toSnakeCase(input: string): string {
+  return input
+    .replace(/[-\s]+/g, '_')
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2')
+    .replace(/([a-z\d])([A-Z])/g, '$1_$2')
+    .toLowerCase();
+}
+
+/** "items" + "getItemInfo" → "items_get_item_info" */
+export function toolName(domain: string, operationId: string): string {
+  return `${domain}_${toSnakeCase(operationId)}`;
+}
