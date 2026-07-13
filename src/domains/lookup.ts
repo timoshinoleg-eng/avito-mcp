@@ -3,12 +3,12 @@
  *
  * Bakugan fork v1.3.0: faithful port of MissiaL/avito-api/scripts/lookup_endpoint.py
  * (Apache-2.0, credit: https://github.com/MissiaL/avito-api). Two read-only tools:
- *   - avito_lookup_search  — substring search over path/summary/tags across all
- *                            swaggers, with a 2-char stem-fallback for Russian
- *                            morphology (если ничего не нашлось, повторяет поиск
- *                            с обрезанным хвостом длины 2)
- *   - avito_lookup_show    — full operation object for a given (path, method),
- *                            with `$ref` resolved ONE LEVEL DEEP (matches MissiaL)
+ *   - lookup_search  — substring search over path/summary/tags across all
+ *                      swaggers, with a 2-char stem-fallback for Russian
+ *                      morphology (если ничего не нашлось, повторяет поиск
+ *                      с обрезанным хвостом длины 2)
+ *   - lookup_show    — full operation object for a given (path, method),
+ *                      with `$ref` resolved ONE LEVEL DEEP (matches MissiaL)
  *
  * No env guard: this domain only reads the swaggers/ directory shipped with the
  * package and is therefore always available. No Avito credentials required.
@@ -39,6 +39,7 @@ interface OperationEntry {
   source: string; // file name, e.g. 'items.json'
   method: string; // upper-case: GET, POST, ...
   path: string; // exactly as in the swagger, e.g. '/items/v3/...'
+  operationId: string;
   summary: string;
   tags: string[];
   operation: Record<string, unknown>;
@@ -61,7 +62,7 @@ function loadIndex(): OperationEntry[] {
     // Defensive: refuse to walk outside the swaggers dir.
     const rel = relative(SWAGGERS_DIR, resolve(full));
     if (rel === '..' || rel.startsWith(`..${sep}`)) continue;
-    let parsed: Record<string, unknown> | null = null;
+    let parsed: Record<string, unknown>;
     try {
       parsed = JSON.parse(readFileSync(full, 'utf8')) as Record<string, unknown>;
     } catch (err) {
@@ -80,6 +81,7 @@ function loadIndex(): OperationEntry[] {
           source: f,
           method: m.toUpperCase(),
           path: p,
+          operationId: typeof o.operationId === 'string' ? o.operationId : '',
           summary: typeof o.summary === 'string' ? o.summary : '',
           tags,
           operation: o,
@@ -131,6 +133,7 @@ function matchOp(needle: string, op: OperationEntry): boolean {
   const q = needle.toLowerCase();
   if (op.summary.toLowerCase().includes(q)) return true;
   if (op.path.toLowerCase().includes(q)) return true;
+  if (op.operationId.toLowerCase().includes(q)) return true;
   return op.tags.some((t) => t.toLowerCase().includes(q));
 }
 
@@ -167,27 +170,27 @@ export const register: DomainRegister = (server, _ctx) => {
   loadIndex();
 
   defineTool(server, _ctx, {
-    name: 'avito_lookup_search',
+    name: 'lookup_search',
     title: 'Авито: поиск эндпоинта в swagger-каталоге',
     risk: 'read',
     domain: 'lookup',
     description:
-      'Ищет Avito API эндпоинты по подстроке (path / summary / tags) по всем ' +
-      'swagger-файлам из swaggers/. Если ничего не найдено и query длиннее 2 ' +
-      'символов — повторяет поиск с обрезанным хвостом (2 символа): это ' +
-      'покрывает простые русские окончания (-а/-я/-о/-е и т.п.). ' +
-      'Faithful port MissiaL/lookup_endpoint.py::search().',
+      'Searches Avito API endpoints by substring across path, summary, tags, and ' +
+      'operationId in all bundled swagger files. If no results are found and the ' +
+      'query is longer than 2 characters, repeats the search with the last 2 ' +
+      'characters removed — a simple stem fallback that covers common Russian ' +
+      'word endings. Faithful port of MissiaL/lookup_endpoint.py::search().',
     method: 'GET',
     path: LOOKUP_SENTINEL_PATH,
     input: {
-      query: z.string().min(1).describe('Подстрока для поиска (кириллица OK).'),
+      query: z.string().min(1).describe('Search substring (Cyrillic is OK).'),
       limit: z
         .number()
         .int()
         .min(1)
         .max(200)
         .optional()
-        .describe('Максимум результатов (default 50, как у MissiaL).'),
+        .describe('Maximum number of results (default 50, like MissiaL).'),
     },
     customExecute: async (args, _ctx): Promise<RequestResponse<unknown>> => {
       const limit = (args.limit as number | undefined) ?? 50;
@@ -213,27 +216,27 @@ export const register: DomainRegister = (server, _ctx) => {
   });
 
   defineTool(server, _ctx, {
-    name: 'avito_lookup_show',
+    name: 'lookup_show',
     title: 'Авито: полная схема эндпоинта (с разрешёнными $ref)',
     risk: 'read',
     domain: 'lookup',
     description:
-      'Возвращает полную OpenAPI-схему эндпоинта для пары (path, method). ' +
-      'Все $ref в operation резолвятся на 1 уровень — то есть подставляется ' +
-      'target из components.*, но без рекурсии. Использовать после ' +
-      'avito_lookup_search для получения request/response схем и параметров. ' +
-      'Faithful port MissiaL/lookup_endpoint.py::show().',
+      'Returns the full OpenAPI operation object for a given (path, method) pair. ' +
+      'All $ref values in the operation are resolved one level deep: the target ' +
+      'from components.* is inlined, but no further recursion is performed. Use ' +
+      'after lookup_search to obtain request/response schemas and parameters. ' +
+      'Faithful port of MissiaL/lookup_endpoint.py::show().',
     method: 'GET',
     path: LOOKUP_SENTINEL_PATH,
     input: {
       path: z
         .string()
         .min(1)
-        .describe('Путь из результатов search, например "/messenger/v1/accounts/{userId}/chats".'),
+        .describe('Path from search results, e.g. "/messenger/v1/accounts/{userId}/chats".'),
       method: z
         .string()
         .min(1)
-        .describe('HTTP метод в любом регистре: get / post / put / patch / delete.'),
+        .describe('HTTP method in any case: get / post / put / patch / delete.'),
     },
     customExecute: async (args, _ctx): Promise<RequestResponse<unknown>> => {
       const index = loadIndex();

@@ -101,8 +101,8 @@ afterAll(async () => {
 });
 
 describe('tool registry invariants', () => {
-  it('registers at least 139 tools (138 swagger + 1 meta)', () => {
-    expect(toolNames.length).toBeGreaterThanOrEqual(139);
+  it('registers at least 147 tools (148 upstream + 2 lookup - 3 hidden confirmation tools; ads is env-conditional)', () => {
+    expect(toolNames.length).toBeGreaterThanOrEqual(147);
   });
 
   it('has no duplicate tool names', () => {
@@ -151,24 +151,44 @@ describe('tool registry invariants', () => {
   });
 
   it('exposes at least one tool per registered domain', () => {
-    const cfg = makeConfig();
-    const ctx: ToolContext = {
-      client: new AvitoClient(cfg),
-      config: cfg,
-      pendingStore: new PendingActionStore(cfg.confirmationTtlSec * 1000),
-    };
-    const empty: number[] = [];
-    domains.forEach((register, index) => {
-      const names: string[] = [];
-      const server = {
-        registerTool(name: string): void {
-          names.push(name);
-        },
-      } as unknown as McpServer;
-      register(server, ctx);
-      if (names.length === 0) empty.push(index);
-    });
-    expect(domains).toHaveLength(20); // 18 Swagger domains + webhook + meta
-    expect(empty).toEqual([]);
+    // The ads domain is env-conditional; temporarily provide fake credentials so
+    // the per-domain registration check validates the full surface. Real
+    // credential handling is covered separately in ads-domain.test.ts.
+    const adsEnvKeys = [
+      'AVITO_ADS_CLIENT_ID',
+      'AVITO_ADS_CLIENT_SECRET',
+      'AVITO_ADS_ACCOUNT_ID',
+    ] as const;
+    const previous: Record<string, string | undefined> = {};
+    for (const key of adsEnvKeys) {
+      previous[key] = process.env[key];
+      process.env[key] = 'manifest-fake-value';
+    }
+    try {
+      const cfg = makeConfig();
+      const ctx: ToolContext = {
+        client: new AvitoClient(cfg),
+        config: cfg,
+        pendingStore: new PendingActionStore(cfg.confirmationTtlSec * 1000),
+      };
+      const empty: number[] = [];
+      domains.forEach((register, index) => {
+        const names: string[] = [];
+        const server = {
+          registerTool(name: string): void {
+            names.push(name);
+          },
+        } as unknown as McpServer;
+        register(server, ctx);
+        if (names.length === 0) empty.push(index);
+      });
+      expect(domains).toHaveLength(22); // 18 Swagger domains + webhook + meta + ads + lookup
+      expect(empty).toEqual([]);
+    } finally {
+      for (const key of adsEnvKeys) {
+        if (previous[key] === undefined) delete process.env[key];
+        else process.env[key] = previous[key];
+      }
+    }
   });
 });

@@ -29,6 +29,15 @@ const here = dirname(fileURLToPath(import.meta.url));
 const OUT_PATH = join(here, '..', 'dist', 'manifest.json');
 
 function makeFakeConfig(): Config {
+  // Provide fake Ads credentials so the manifest captures the full tool surface.
+  // The ads SDK client is lazily instantiated inside tool handlers; registration
+  // only checks that the variables are present, so no real credentials or API
+  // calls are needed here.
+  process.env.AVITO_ADS_CLIENT_ID = process.env.AVITO_ADS_CLIENT_ID || 'manifest-fake-client-id';
+  process.env.AVITO_ADS_CLIENT_SECRET =
+    process.env.AVITO_ADS_CLIENT_SECRET || 'manifest-fake-client-secret';
+  process.env.AVITO_ADS_ACCOUNT_ID = process.env.AVITO_ADS_ACCOUNT_ID || '12345';
+
   return {
     clientId: 'manifest-only',
     clientSecret: 'manifest-only',

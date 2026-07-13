@@ -52,12 +52,12 @@ describe('manifest snapshot', () => {
     expect(manifest).not.toHaveProperty('generated_at');
   });
 
-  it('has stable counts_by_risk (148 total)', () => {
+  it('has stable counts_by_risk (157 total)', () => {
     expect(manifest.counts_by_risk).toEqual({
       sensitive: 3,
       // External submissions, recipient changes, and third-party-visible effects
       // are public so money_public confirmation protects them by default.
-      read: 80,
+      read: 89,
       write: 40,
       money: 9,
       public: 16,
@@ -65,12 +65,13 @@ describe('manifest snapshot', () => {
     });
   });
 
-  it('has total tool_count = 148', () => {
-    expect(manifest.tool_count).toBe(148);
+  it('has total tool_count = 157', () => {
+    expect(manifest.tool_count).toBe(157);
   });
 
-  it('covers exactly the expected 19 domain prefixes', () => {
+  it('covers exactly the expected 21 domain prefixes', () => {
     const expected = new Set([
+      'ads',
       'auth',
       'autoload',
       'calltracking',
@@ -80,6 +81,7 @@ describe('manifest snapshot', () => {
       'delivery',
       'hierarchy',
       'items',
+      'lookup',
       'meta',
       'messenger',
       'msg_discounts',

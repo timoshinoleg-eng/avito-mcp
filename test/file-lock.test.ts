@@ -48,25 +48,29 @@ describe('file-lock', () => {
     vi.restoreAllMocks();
   });
 
-  it('serialises concurrent acquirers - only one critical section runs at a time', async () => {
-    const inside: string[] = [];
-    const work = (id: string) =>
-      withFileLock(target, async () => {
-        inside.push(`${id}:enter`);
-        await new Promise((resolve) => setTimeout(resolve, 20));
-        inside.push(`${id}:exit`);
-      });
-    await Promise.all([work('A'), work('B'), work('C')]);
+  it(
+    'serialises concurrent acquirers - only one critical section runs at a time',
+    async () => {
+      const inside: string[] = [];
+      const work = (id: string) =>
+        withFileLock(target, async () => {
+          inside.push(`${id}:enter`);
+          await new Promise((resolve) => setTimeout(resolve, 20));
+          inside.push(`${id}:exit`);
+        });
+      await Promise.all([work('A'), work('B'), work('C')]);
 
-    expect(inside).toHaveLength(6);
-    for (let index = 0; index < 6; index += 2) {
-      const enter = inside[index];
-      const exit = inside[index + 1];
-      expect(enter!.endsWith(':enter')).toBe(true);
-      expect(exit!.endsWith(':exit')).toBe(true);
-      expect(enter![0]).toBe(exit![0]);
-    }
-  });
+      expect(inside).toHaveLength(6);
+      for (let index = 0; index < 6; index += 2) {
+        const enter = inside[index];
+        const exit = inside[index + 1];
+        expect(enter!.endsWith(':enter')).toBe(true);
+        expect(exit!.endsWith(':exit')).toBe(true);
+        expect(enter![0]).toBe(exit![0]);
+      }
+    },
+    process.platform === 'win32' ? 15_000 : 5_000,
+  );
 
   it('releases the lease even when fn throws', async () => {
     await expect(

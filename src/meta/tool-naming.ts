@@ -21,6 +21,9 @@ export const DOMAIN_PREFIXES = {
   trxpromo: 'trxpromo',
   calltracking: 'calltracking',
   msg_discounts: 'msg_discounts',
+  // Bakugan fork v1.3.0
+  ads: 'ads',
+  lookup: 'lookup',
 } as const;
 
 export const TOOL_DOMAIN_PREFIXES = [...Object.values(DOMAIN_PREFIXES), 'meta'].sort(

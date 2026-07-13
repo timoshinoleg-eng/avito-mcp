@@ -49,7 +49,7 @@ import { logger } from '../logger.js';
 /**
  * Module-level singleton for the AvitoAdsClient. We use lazy init because:
  *  - The SDK throws on construction if AVITO_ADS_* env vars are missing
- *  - We want the rest of the MCP server (148+ tools) to keep working when
+ *  - We want the rest of the MCP server (150+ tools) to keep working when
  *    AVITO_ADS_* is not configured (e.g. for non-Ads workflows)
  *
  * The token cache lives in-process in the SDK's MemoryTokenStorage, which is
@@ -126,7 +126,7 @@ const AD_SENTINEL_PATH = '/ads/v1/internal/sdk-call';
 export const register: DomainRegister = (server, _ctx) => {
   if (!isAdsConfigured()) {
     logger.info(
-      'AVITO_ADS_* env vars not set — ads domain NOT registered (148+ tools still work). ' +
+      'AVITO_ADS_* env vars not set — ads domain NOT registered (150+ tools still work). ' +
         'Fill AVITO_ADS_CLIENT_ID, AVITO_ADS_CLIENT_SECRET, AVITO_ADS_ACCOUNT_ID in .env to enable.',
     );
     return;

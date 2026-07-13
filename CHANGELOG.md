@@ -67,7 +67,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 ### New domains
 
 - **Ads** (`src/domains/ads.ts`, +`avito-ads@^1.0.0` dep) — 7 read-only tools wrapping the official `avito-ads` SDK. Endpoints: `ads_account_get_balance`, `ads_advertisers_list`, `ads_contracts_list`, `ads_campaigns_list`, `ads_groups_list`, `ads_creatives_list`, `ads_statistics_campaign`. Risk: `read`. Gated on `AVITO_ADS_CLIENT_ID/SECRET/ACCOUNT_ID`; if any is missing, the domain is skipped at registration and a single info log is emitted (no thrown error). No write operations, no creatives upload, no money mutation.
-- **Lookup** (`src/domains/lookup.ts`) — 2 tools indexing the 18 bundled OpenAPI specs at register time. Endpoints: `avito_lookup_search` (substring search across path/summary/tags with a single 2-char stem fallback when results are empty, default limit 50) and `avito_lookup_show` (resolves the spec for a given `path`+`method` one `$ref` level deep). Risk: `public`. Always registered; no env required. Index is built once at startup from `swaggers/` (138 operations / 18 files observed at v1.3.0 boot).
+- **Lookup** (`src/domains/lookup.ts`) — 2 tools indexing the 18 bundled OpenAPI specs at register time. Endpoints: `lookup_search` (substring search across path/summary/tags with a single 2-char stem fallback when results are empty, default limit 50) and `lookup_show` (resolves the spec for a given `path`+`method` one `$ref` level deep). Risk: `read`. Always registered; no env required. Index is built once at startup from `swaggers/` (138 operations / 18 files observed at v1.3.0 boot).
 
 ### Build, env, and manifests
 

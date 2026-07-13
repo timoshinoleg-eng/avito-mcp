@@ -218,7 +218,14 @@ async function openValidatedFile(
   if (process.platform === 'linux') {
     return openLinuxAnchored(realFile, allowedRoot, expectedFileStat, expectedRootStat);
   }
-  return openPortableVerified(realFile, allowedRoot, expectedFileStat, expectedRootStat);
+  if (typeof constants.O_NOFOLLOW === 'number') {
+    return openPortableVerified(realFile, allowedRoot, expectedFileStat, expectedRootStat);
+  }
+  // Windows does not expose O_NOFOLLOW. Use a lstat + post-open identity check
+  // fallback. This is slightly more vulnerable to a lstat/open race than
+  // O_NOFOLLOW, but it still rejects pre-existing symlinks and detects swaps
+  // via inode/dev identity checks after the open.
+  return openWindowsVerified(realFile, allowedRoot, expectedFileStat, expectedRootStat);
 }
 
 async function openLinuxAnchored(
@@ -328,14 +335,65 @@ async function openPortableVerified(
   expectedFileStat: Stats,
   expectedRootStat: Stats,
 ): Promise<FileHandle> {
-  if (typeof constants.O_NOFOLLOW !== 'number') {
+  // Only called when O_NOFOLLOW is defined (macOS / BSD / Linux fallbacks).
+  const file = await fs.open(realFile, constants.O_RDONLY | constants.O_NOFOLLOW);
+  try {
+    const [openedStat, postFile, postRoot] = await Promise.all([
+      file.stat(),
+      fs.realpath(realFile),
+      fs.realpath(allowedRoot),
+    ]);
+    const [postFileStat, postRootStat] = await Promise.all([
+      fs.stat(postFile),
+      fs.stat(postRoot),
+    ]);
+    if (
+      postFile !== realFile ||
+      postRoot !== allowedRoot ||
+      !isPathInside(postFile, postRoot) ||
+      !sameIdentity(openedStat, expectedFileStat) ||
+      !sameIdentity(postFileStat, openedStat) ||
+      !sameIdentity(postRootStat, expectedRootStat)
+    ) {
+      throw new UploadGuardError(
+        'file or parent directory changed during validation',
+        realFile,
+        'symlink_escape',
+      );
+    }
+    return file;
+  } catch (err) {
+    await file.close().catch(() => undefined);
+    throw err;
+  }
+}
+
+async function openWindowsVerified(
+  realFile: string,
+  allowedRoot: string,
+  expectedFileStat: Stats,
+  expectedRootStat: Stats,
+): Promise<FileHandle> {
+  // Pre-check: reject if the path is currently a symlink. This prevents the
+  // obvious case of following a symlink at call time.
+  let lstatInfo: Stats;
+  try {
+    lstatInfo = await fs.lstat(realFile);
+  } catch (err) {
     throw new UploadGuardError(
-      'platform cannot verify a no-follow file descriptor',
+      `lstat failed: ${(err as NodeJS.ErrnoException).code ?? 'EUNKNOWN'}`,
       realFile,
-      'symlink_escape',
+      'stat_failed',
     );
   }
-  const file = await fs.open(realFile, constants.O_RDONLY | constants.O_NOFOLLOW);
+  if (lstatInfo.isSymbolicLink()) {
+    throw new UploadGuardError('path is a symlink', realFile, 'symlink_escape');
+  }
+
+  // Windows lacks O_NOFOLLOW, so we open normally and verify afterwards that
+  // the descriptor we got matches the expected file identity and that the path
+  // still resolves inside the allowed root.
+  const file = await fs.open(realFile, constants.O_RDONLY);
   try {
     const [openedStat, postFile, postRoot] = await Promise.all([
       file.stat(),

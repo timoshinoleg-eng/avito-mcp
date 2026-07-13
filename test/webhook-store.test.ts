@@ -245,7 +245,7 @@ describe('WebhookStore.onChange', () => {
 });
 
 describe('WebhookStore durability log', () => {
-  it('writes a minimized 0600 JSONL record without raw message content', async () => {
+  it('writes a minimized JSONL record without raw message content', async () => {
     const dir = join(tmpdir(), `webhook-log-${randomBytes(6).toString('hex')}`);
     const file = join(dir, 'events.jsonl');
     try {
@@ -263,11 +263,26 @@ describe('WebhookStore durability log', () => {
       expect(text).not.toContain('PRIVATE-MESSAGE-CANARY');
       expect(JSON.parse(text).raw).toBeUndefined();
       expect(JSON.parse(text).chat_id).toBe('chat-1');
-      expect((await fs.stat(file)).mode & 0o777).toBe(0o600);
     } finally {
       await fs.rm(dir, { recursive: true, force: true });
     }
   });
+
+  it.skipIf(process.platform === 'win32')(
+    'creates the durability log with 0600 permissions on Unix',
+    async () => {
+      const dir = join(tmpdir(), `webhook-log-mode-${randomBytes(6).toString('hex')}`);
+      const file = join(dir, 'events.jsonl');
+      try {
+        const store = new WebhookStore(10, file);
+        store.record({ id: 'mode-check', payload: { type: 'message', value: {} } });
+        await store.flush();
+        expect((await fs.stat(file)).mode & 0o777).toBe(0o600);
+      } finally {
+        await fs.rm(dir, { recursive: true, force: true });
+      }
+    },
+  );
 
   it('serializes appends and retains only the configured rotated files', async () => {
     const dir = join(tmpdir(), `webhook-rotate-${randomBytes(6).toString('hex')}`);
@@ -293,13 +308,24 @@ describe('WebhookStore durability log', () => {
     try {
       await fs.mkdir(dir, { recursive: true });
       await fs.writeFile(target, 'DO-NOT-TOUCH', { mode: 0o644 });
-      await fs.symlink(target, link);
+      try {
+        await fs.symlink(target, link);
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code === 'EPERM') {
+          // Windows without symlink creation privileges — the protection cannot
+          // be exercised in this environment, so skip the rest of the test.
+          return;
+        }
+        throw err;
+      }
       const store = new WebhookStore(10, link);
       store.record(makeEnvelope({ id: 'symlink-attempt' }));
       await store.flush();
       expect(store.isReady()).toBe(false);
       expect(await fs.readFile(target, 'utf8')).toBe('DO-NOT-TOUCH');
-      expect((await fs.stat(target)).mode & 0o777).toBe(0o644);
+      if (process.platform !== 'win32') {
+        expect((await fs.stat(target)).mode & 0o777).toBe(0o644);
+      }
     } finally {
       await fs.rm(dir, { recursive: true, force: true });
     }

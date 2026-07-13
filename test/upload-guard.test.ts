@@ -113,7 +113,15 @@ describe('upload-guard.validateUpload', () => {
   it('rejects symlink that escapes the allowed dir', async () => {
     const real = await writeFile(outsideDir, 'real.jpg', JPEG_HEADER);
     const link = join(allowedDir, 'link.jpg');
-    await fs.symlink(real, link);
+    try {
+      await fs.symlink(real, link);
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code === 'EPERM') {
+        // Windows without symlink creation privileges — skip this protection test.
+        return;
+      }
+      throw err;
+    }
     cleanupTargets.push(link);
     // realpath of the link points outside allowedDir → outside_allowed_dirs
     await expect(validateUpload(link, baseCfg())).rejects.toMatchObject({

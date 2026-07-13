@@ -13,7 +13,7 @@
 [![Avito API snapshot](https://img.shields.io/badge/Avito_API_snapshot-2026--05--25-orange)](./swaggers)
 
 > **Дайте вашим AI-агентам руки и ноги в Avito.**
-> MCP-сервер, через который Claude, Cursor, Cline и любой другой AI-ассистент **делает реальную работу на Avito за вас** — отвечает клиентам, ведёт объявления, запускает продвижение, обрабатывает заказы, анализирует статистику. **138 tools по Swagger-операциям** + **3 локальных/convenience tools** + **7 meta-tools** = до **148 MCP tools** из **18 официальных API Avito**. Работает локально по stdio или как общий **удалённый MCP** по HTTP (OAuth 2.1), со встроенным **приёмником webhook** для событий чатов в реальном времени. Установка одной командой `npx`.
+> MCP-сервер, через который Claude, Cursor, Cline и любой другой AI-ассистент **делает реальную работу на Avito за вас** — отвечает клиентам, ведёт объявления, запускает продвижение, обрабатывает заказы, анализирует статистику. **138 tools по Swagger-операциям** + **7 опциональных инструментов Авито Реклама** + **2 lookup-инструмента каталога swagger** + **3 локальных/convenience tools** + **7 meta-tools** = до **157 MCP tools** из **19 официальных API Avito** и lookup-каталога. Работает локально по stdio или как общий **удалённый MCP** по HTTP (OAuth 2.1), со встроенным **приёмником webhook** для событий чатов в реальном времени. Установка одной командой `npx`.
 
 🇬🇧 **[English version →](./README.md)**
 
@@ -83,19 +83,19 @@ stdio-транспорт оставляет credentials и ответы API на
 
 ---
 
-## Что включено — до 148 инструментов
+## Что включено — до 157 инструментов
 
 | Конфигурация                                            | Видимо tools                                      |
 | ------------------------------------------------------- | ------------------------------------------------- |
-| По умолчанию (`AVITO_MCP_MODE=full_access`, без opt-in) | **144**                                           |
-| + `AVITO_MCP_EXPOSE_AUTH_TOOLS=1`                       | 147 (+3 auth)                                     |
-| + `AVITO_MCP_ALLOWED_UPLOAD_DIRS=…`                     | 145 (+1 upload)                                   |
-| + Оба opt-in                                            | **148**                                           |
+| По умолчанию (`AVITO_MCP_MODE=full_access`, без opt-in) | **153**                                           |
+| + `AVITO_MCP_EXPOSE_AUTH_TOOLS=1`                       | 156 (+3 auth)                                     |
+| + `AVITO_MCP_ALLOWED_UPLOAD_DIRS=…`                     | 154 (+1 upload)                                   |
+| + Оба opt-in                                            | **157**                                           |
 | `AVITO_MCP_CONFIRMATION_MODE=off`                       | −3 (скрывает meta_*_action)                       |
-| `AVITO_MCP_MODE=read_only`                              | 80 (только `risk=read`)                           |
-| `AVITO_MCP_MODE=guarded`                                | 120 (`read` + `write`; скрывает `money`/`public`) |
+| `AVITO_MCP_MODE=read_only`                              | 89 (только `risk=read`)                           |
+| `AVITO_MCP_MODE=guarded`                                | 129 (`read` + `write`; скрывает `money`/`public`) |
 
-138 tools соответствуют операциям из bundled Swagger один-к-одному, 3 являются локальными/convenience tools, ещё 7 — meta-tools: `meta_get_rate_limits`, три `meta_*_action` для [confirmation flow](#безопасность), плюс `meta_health`, `meta_auth_status` и `meta_capabilities` для интроспекции. Авторитетный реестр активной policy — [`dist/manifest.json`](./dist/manifest.json) (перегенерация: `npm run generate:manifest`).
+138 tools соответствуют операциям из bundled Swagger один-к-одному, 7 опциональных инструментов оборачивают SDK Авито Реклама, 2 lookup-инструмента ищут по каталогу swagger, 3 являются локальными/convenience tools, ещё 7 — meta-tools: `meta_get_rate_limits`, три `meta_*_action` для [confirmation flow](#безопасность), плюс `meta_health`, `meta_auth_status` и `meta_capabilities` для интроспекции. Домен Ads виден только при настроенных `AVITO_ADS_CLIENT_ID`, `AVITO_ADS_CLIENT_SECRET` и `AVITO_ADS_ACCOUNT_ID`. Авторитетный реестр активной policy — [`dist/manifest.json`](./dist/manifest.json) (перегенерация: `npm run generate:manifest`).
 
 Каждый публичный endpoint из 18 OpenAPI-спецификаций Avito. Раскрывайте любую группу.
 

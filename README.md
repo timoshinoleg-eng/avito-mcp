@@ -13,7 +13,7 @@
 [![Avito API snapshot](https://img.shields.io/badge/Avito_API_snapshot-2026--05--25-orange)](./swaggers)
 
 > **Give your AI agents hands and feet on Avito.**
-> An MCP server that lets Claude, Cursor, Cline and any other AI assistant **do real work on Avito for you** — answer customers, manage listings, run promotions, fulfil orders, analyse stats. **138 Swagger endpoint tools** + **3 local/convenience tools** + **7 meta tools** = up to **148 MCP tools** across **18 official Avito APIs**. Runs locally over stdio or as a shared **remote MCP** over HTTP (OAuth 2.1), with a built-in **webhook receiver** for real-time chat events. One `npx` command to install.
+> An MCP server that lets Claude, Cursor, Cline and any other AI assistant **do real work on Avito for you** — answer customers, manage listings, run promotions, fulfil orders, analyse stats. **138 Swagger endpoint tools** + **7 optional Avito Ads tools** + **2 lookup catalogue tools** + **3 local/convenience tools** + **7 meta tools** = up to **157 MCP tools** across **19 official Avito APIs** and the lookup catalogue. Runs locally over stdio or as a shared **remote MCP** over HTTP (OAuth 2.1), with a built-in **webhook receiver** for real-time chat events. One `npx` command to install.
 
 🇷🇺 **[Русская версия / Russian version →](./README.ru.md)**
 
@@ -83,19 +83,19 @@ The stdio transport keeps every credential and API response on your machine. No 
 
 ---
 
-## What's included — up to 148 tools
+## What's included — up to 157 tools
 
 | Configuration                                      | Tools visible                                  |
 | -------------------------------------------------- | ---------------------------------------------- |
-| Default (`AVITO_MCP_MODE=full_access`, no opt-ins) | **144**                                        |
-| + `AVITO_MCP_EXPOSE_AUTH_TOOLS=1`                  | 147 (+3 auth)                                  |
-| + `AVITO_MCP_ALLOWED_UPLOAD_DIRS=…`                | 145 (+1 upload)                                |
-| + Both opt-ins                                     | **148**                                        |
+| Default (`AVITO_MCP_MODE=full_access`, no opt-ins) | **153**                                        |
+| + `AVITO_MCP_EXPOSE_AUTH_TOOLS=1`                  | 156 (+3 auth)                                  |
+| + `AVITO_MCP_ALLOWED_UPLOAD_DIRS=…`                | 154 (+1 upload)                                |
+| + Both opt-ins                                     | **157**                                        |
 | `AVITO_MCP_CONFIRMATION_MODE=off`                  | −3 (hides meta_*_action)                       |
-| `AVITO_MCP_MODE=read_only`                         | 80 (only `risk=read`)                          |
-| `AVITO_MCP_MODE=guarded`                           | 120 (`read` + `write`; hides `money`/`public`) |
+| `AVITO_MCP_MODE=read_only`                         | 89 (only `risk=read`)                          |
+| `AVITO_MCP_MODE=guarded`                           | 129 (`read` + `write`; hides `money`/`public`) |
 
-138 tools map one-to-one to bundled Swagger operations, 3 are local/convenience tools, and 7 are meta tools — `meta_get_rate_limits`, three `meta_*_action` tools for the [confirmation flow](#security), plus `meta_health`, `meta_auth_status` and `meta_capabilities` for introspection. The authoritative, active-policy inventory lives in [`dist/manifest.json`](./dist/manifest.json) (regenerate with `npm run generate:manifest`).
+138 tools map one-to-one to bundled Swagger operations, 7 optional tools wrap the Avito Ads SDK, 2 lookup tools search the bundled swagger catalogue, 3 are local/convenience tools, and 7 are meta tools — `meta_get_rate_limits`, three `meta_*_action` tools for the [confirmation flow](#security), plus `meta_health`, `meta_auth_status` and `meta_capabilities` for introspection. The Avito Ads domain is only visible when `AVITO_ADS_CLIENT_ID`, `AVITO_ADS_CLIENT_SECRET` and `AVITO_ADS_ACCOUNT_ID` are configured. The authoritative, active-policy inventory lives in [`dist/manifest.json`](./dist/manifest.json) (regenerate with `npm run generate:manifest`).
 
 Every public endpoint from Avito's 18 OpenAPI specs is exposed. Click any group to expand.
 

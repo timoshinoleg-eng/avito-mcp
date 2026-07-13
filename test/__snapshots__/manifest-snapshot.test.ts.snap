@@ -2,6 +2,13 @@
 
 exports[`manifest snapshot > snapshot: full tool roster (name, risk, domain) 1`] = `
 [
+  "read      ads             ads_account_get_balance",
+  "read      ads             ads_advertisers_list",
+  "read      ads             ads_campaigns_list",
+  "read      ads             ads_contracts_list",
+  "read      ads             ads_creatives_list",
+  "read      ads             ads_groups_list",
+  "read      ads             ads_statistics_campaign",
   "sensitive auth            auth_get_access_token",
   "sensitive auth            auth_get_access_token_authorization_code",
   "sensitive auth            auth_refresh_access_token_authorization_code",
@@ -90,6 +97,8 @@ exports[`manifest snapshot > snapshot: full tool roster (name, risk, domain) 1`]
   "money     items           items_put_item_vas",
   "money     items           items_put_item_vas_package_v2",
   "public    items           items_update_price",
+  "read      lookup          lookup_search",
+  "read      lookup          lookup_show",
   "write     messenger       messenger_chat_read",
   "public    messenger       messenger_delete_message",
   "read      messenger       messenger_get_chat_by_id_v2",

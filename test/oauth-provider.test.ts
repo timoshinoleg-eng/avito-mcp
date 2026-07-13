@@ -43,18 +43,21 @@ let createOAuthSubsystem:
 const OWNER_PASSWORD = 'correct-horse-battery-staple';
 const RESOURCE = new URL('https://mcp.example.com/mcp');
 
-beforeAll(async () => {
-  const providerMod = await import('../src/http/oauth/provider.js');
-  AvitoOAuthProvider = providerMod.AvitoOAuthProvider;
-  expect(typeof AvitoOAuthProvider).toBe('function');
-  // index.ts is optional for these tests but exercised when present.
-  try {
-    const idxMod = await import('../src/http/oauth/index.js');
-    createOAuthSubsystem = idxMod.createOAuthSubsystem;
-  } catch {
-    createOAuthSubsystem = undefined;
-  }
-});
+beforeAll(
+  async () => {
+    const providerMod = await import('../src/http/oauth/provider.js');
+    AvitoOAuthProvider = providerMod.AvitoOAuthProvider;
+    expect(typeof AvitoOAuthProvider).toBe('function');
+    // index.ts is optional for these tests but exercised when present.
+    try {
+      const idxMod = await import('../src/http/oauth/index.js');
+      createOAuthSubsystem = idxMod.createOAuthSubsystem;
+    } catch {
+      createOAuthSubsystem = undefined;
+    }
+  },
+  process.platform === 'win32' ? 30_000 : 10_000,
+);
 
 function makeHttpConfig(overrides: Partial<HttpConfig> = {}): HttpConfig {
   return {

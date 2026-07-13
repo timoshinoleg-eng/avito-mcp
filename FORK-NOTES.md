@@ -60,9 +60,9 @@ Upstream имеет 18 доменов (148 tools) для основного API 
 - Single 2-char stem-fallback (`needle.slice(0, -2)`) если 0 результатов и needle длиннее 2 символов
 - Возвращает top-N совпадений; по запросу resolve-ит `$ref` параметры на один уровень вложенности
 
-**Tools (2 tools, risk='public' — никакого fetch к Avito):**
-- `avito_lookup_search({query: string, limit?: number})` → массив совпадений `{method, path, summary, description, domain, tags}`
-- `avito_lookup_show({path: string, method: string})` → развёрнутая запись эндпоинта с resolved `$ref` (один уровень)
+**Tools (2 tools, risk='read' — никакого fetch к Avito):**
+- `lookup_search({query: string, limit?: number})` → массив совпадений `{method, path, summary, description, domain, tags}`
+- `lookup_show({path: string, method: string})` → развёрнутая запись эндпоинта с resolved `$ref` (один уровень)
 
 **Файлы:**
 - `src/domains/lookup.ts` — 2 tools + встроенный index loader (~245 строк)

@@ -258,7 +258,7 @@ describe('release and deployment hardening', () => {
     15_000,
   );
 
-  it('keeps the service installer executable', () => {
+  it.skipIf(process.platform === 'win32')('keeps the service installer executable', () => {
     expect(statSync(resolve(root, 'deploy/install-services.sh')).mode & 0o111).not.toBe(0);
   });
 });
